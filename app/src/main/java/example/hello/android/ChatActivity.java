@@ -5,32 +5,54 @@ import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class ChatActivity extends AppCompatActivity {
 
-    TextView textView;
     SharedPreferences preferences;
+    ListView listView;
+
+    EditText editText;
+    Button buttonSend;
+
+    ArrayAdapter<String> arrayAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
-        textView = (TextView) findViewById(R.id.text);
-        preferences = getSharedPreferences("pref", MODE_PRIVATE);
+        listView = (ListView) findViewById(R.id.listView);
+        editText = (EditText) findViewById(R.id.et_message);
+        buttonSend = (Button) findViewById(R.id.btn_send);
 
-        String nickname = preferences.getString("key", "Not found");
-        textView.setText(nickname);
-
-        textView.setOnClickListener(new View.OnClickListener() {
+        arrayAdapter = new ArrayAdapter<String>(
+                ChatActivity.this, android.R.layout.simple_list_item_1);
+        listView.setAdapter(arrayAdapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(ChatActivity.this, MainActivity.class);
-                intent.putExtra("requestCode", 100);
-                startActivityForResult(intent, 100);
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Toast.makeText(ChatActivity.this, arrayAdapter.getItem(position), Toast.LENGTH_SHORT).show();
             }
         });
+
+        buttonSend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String message = editText.getText().toString();
+                arrayAdapter.add(message);
+                editText.setText("");
+            }
+        });
+
+        preferences = getSharedPreferences("pref", MODE_PRIVATE);
+        String nickname = preferences.getString("key", "Not found");
 
     }
 
@@ -40,7 +62,6 @@ public class ChatActivity extends AppCompatActivity {
 
         if(requestCode == 100 && resultCode == 200) {
             String nickname = data.getStringExtra("nickname");
-            textView.setText(nickname);
         }
     }
 }
