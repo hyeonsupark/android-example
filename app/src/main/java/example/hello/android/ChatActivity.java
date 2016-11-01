@@ -4,6 +4,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -21,8 +24,9 @@ public class ChatActivity extends AppCompatActivity {
     EditText editText;
     Button buttonSend;
 
-    ArrayAdapter<String> arrayAdapter;
+    ChatAdapter chatAdapter;
 
+    String nickname;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,13 +36,17 @@ public class ChatActivity extends AppCompatActivity {
         editText = (EditText) findViewById(R.id.et_message);
         buttonSend = (Button) findViewById(R.id.btn_send);
 
-        arrayAdapter = new ArrayAdapter<String>(
-                ChatActivity.this, android.R.layout.simple_list_item_1);
-        listView.setAdapter(arrayAdapter);
+        preferences = getSharedPreferences("pref", MODE_PRIVATE);
+        nickname = preferences.getString("key", "Not found");
+
+        chatAdapter = new ChatAdapter(ChatActivity.this, R.layout.row_chat);
+
+        listView.setAdapter(chatAdapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Toast.makeText(ChatActivity.this, arrayAdapter.getItem(position), Toast.LENGTH_SHORT).show();
+                Toast.makeText(ChatActivity.this, chatAdapter.getItem(position).getMessage(),
+                        Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -46,13 +54,16 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String message = editText.getText().toString();
-                arrayAdapter.add(message);
+                Model model = new Model();
+                model.setNickname(nickname);
+                model.setMessage(message);
+
+                chatAdapter.add(model);
+
                 editText.setText("");
             }
         });
 
-        preferences = getSharedPreferences("pref", MODE_PRIVATE);
-        String nickname = preferences.getString("key", "Not found");
 
     }
 
@@ -62,7 +73,34 @@ public class ChatActivity extends AppCompatActivity {
 
         if(requestCode == 100 && resultCode == 200) {
             String nickname = data.getStringExtra("nickname");
+            this.nickname = nickname;
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        super.onCreateOptionsMenu(menu);
+
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_chat, menu);
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch(item.getItemId()) {
+            case R.id.setting:
+                Intent intent = new Intent(ChatActivity.this,
+                        MainActivity.class);
+                intent.putExtra("requestCode", 100);
+
+                startActivityForResult(intent, 100);
+                break;
+            default:
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
 
